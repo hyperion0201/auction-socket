@@ -1,0 +1,24 @@
+﻿<Window x:Class="Client.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Client"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="400" Width="500"
+        Loaded="Window_Loaded">
+ 
+    <StackPanel Name="clientRegion">
+        <TextBlock Name="checkText"/>
+        <ListView Margin="10" Name="productBoard">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="ID" Width="100" DisplayMemberBinding="{Binding ID}"/>
+                    <GridViewColumn Header="Product Name" Width="200" DisplayMemberBinding="{Binding ProductName}"/>
+                    <GridViewColumn Header="Pricing" Width="150" DisplayMemberBinding="{Binding BeginCost}"/>
+                    
+                </GridView>
+            </ListView.View>
+        </ListView>
+    </StackPanel>
+</Window>
