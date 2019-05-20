@@ -5,13 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using System.Timers;
 using System.Net.Sockets;
 using System.Net;
 using System.Threading;
@@ -19,15 +13,30 @@ using System.Diagnostics;
 using System.Windows.Threading;
 using System.IO;
 
+using Timer = System.Timers.Timer;
+
 namespace Server {
 
+    public class ResultModel {
+        public string Email { get; set; }
+        public string Product { get; set; }
+
+    }
     public partial class MainWindow : Window {
        
         private const int port = 8080;
         public Socket server = null;
         public string data = null;
+        private int maxClient = 0;
+        private int queueTime = 30;
+        private Thread handler = null;
+        private int connectedAmount = 0;
         private List<ClientModel> clientList = null;
         private List<Product> productList = null;
+        private List<ResultModel> winClients = null;
+        Timer timeTracker = null;
+        
+        private int endAuctionFlag = 0;
         public static MainWindow Instance { get; private set; }
         public MainWindow() {
             InitializeComponent();
@@ -37,6 +46,7 @@ namespace Server {
         private void StartServer(int maxClient) {
             clientList = new List<ClientModel>();
             productList = new List<Product>();
+            this.maxClient = maxClient;
             // load product
 
             StreamReader sr = new StreamReader("product.txt");
@@ -57,41 +67,115 @@ namespace Server {
             server.Bind(localEP);
             
             status.Text = "Waiting for connection...";
+            
             new Thread(() => StartListening(server, maxClient)).Start();
+            
+            
         }
 
+       
         private void StartListening(Socket socket, int maxClient) {
-            socket.Listen(maxClient);
-            Accept(socket);
+            try {
+                socket.Listen(maxClient);
+                Accept(socket);
+            }
+          catch (SocketException e) {
+                Debug.WriteLine(e.Message);
+            }
         }
-        private void Accept(Socket socket) {
+
+        private void OnSend(Socket socket, string s) {
+            byte[] msg = Encoding.ASCII.GetBytes(s);
+            socket.Send(msg);
+        }
+
+        private static void TimerProcess() {
+            Timer timeTracker = new Timer();
+            timeTracker.Interval = 1000;
+            timeTracker.Elapsed += (sender, e) => {
+                Instance.queueTime--;
+                Instance.Dispatcher.Invoke(() => Instance.timeText.Text = $"{Instance.queueTime}");
+
+                if (Instance.queueTime == 0) {
+                    timeTracker.Stop();
+                    Instance.endAuctionFlag = 1;
+
+                    //Send out of time msg
+                    MessageBox.Show("Auction is over.");
+
+                    //timeFlag = 0;
+
+                    //return;
+                }
+            };
+
+            timeTracker.Start();
+        }
+        private  void Accept(Socket socket) {
+            int timeFlag = 1;
             while(true) {
                
-                Socket accepted = socket.Accept();
-               
-                //create new thread
-                Thread handler = new Thread(() => {
-                    HandleIncomingClient(accepted);
-                });
-                handler.Start();
-                
+                    Socket accepted = socket.Accept();
+                   
+               Instance.Dispatcher.Invoke(()=> timeText.Text = $"{queueTime}");
+                    if (connectedAmount < maxClient && timeFlag==1) {
+                    connectedAmount++;
+                    queueTime = 30;
+
+                    timeTracker = null;
+                    
+
+                    // send ok response
+                    byte[] okmsg = Encoding.ASCII.GetBytes("Connected.");
+                    accepted.Send(okmsg);
+
+
+                    //create new thread
+
+                     handler = new Thread(() => {
+                        HandleIncomingClient(accepted);
+                    });
+                    handler.Start();
+                    
+                }
+                else {
+                    // send kick msg to client
+                    byte[] msg = Encoding.ASCII.GetBytes("Kicked from server.");
+                    accepted.Send(msg);
+                    accepted.Shutdown(SocketShutdown.Both);
+                    accepted.Close();
+                    return;
+                }
+ 
             }
           
         }
-        private static void HandleIncomingClient(Socket socket) {
-            // begin receive
-            string data = null;
-            byte[] bytes = new byte[1024];
-            while (true) {
-                bytes = new byte[1024];
-                int bytesRec = socket.Receive(bytes);
-                data += Encoding.ASCII.GetString(bytes, 0, bytesRec);
-                if (data.IndexOf("\n") > -1) {
-                    break;  
-                }
-               
+        
+
+        private void GetProductIndex(List<Product> list, string s) {
+            string[] arr = s.Split('/');
+            for (int i =0;i<list.Count;i++) {
+                if (arr[0] == list[i].ID) {
+                    productList[i].auctioner.Add(new AuctionModel() {
+                        AuctionEmail = arr[1],
+                        AuctionCost = arr[2]
+                    });
+                    return;
+                };
                
             }
+            
+        }
+        private static void HandleIncomingClient(Socket socket) {
+            //int actTime = 60;
+            
+            string clientEmail = "";
+            string data = null;
+            byte[] bytes = new byte[1024];
+            int bytesRec = socket.Receive(bytes);
+            data = Encoding.ASCII.GetString(bytes, 0, bytesRec); // email str receive from client
+            clientEmail = data;
+           
            // handle email 
            for (int i =0;i<Instance.clientList.Count;i++) {
                 if (data == Instance.clientList[i].Email) {
@@ -108,24 +192,100 @@ namespace Server {
                 ClientSocket = socket
             }));
 
-            //echo back to client
+            //bypass next receving from client
             byte[] msg = Encoding.ASCII.GetBytes(data);
             socket.Send(msg);
+            // send product file to client
+            byte[] product = File.ReadAllBytes(System.IO.Path.GetFullPath("product.txt"));
+            socket.Send(product);
+
+                try {
+                    int auctByte = socket.Receive(bytes);
+                    string newAuct = Encoding.ASCII.GetString(bytes, 0, auctByte);
+                Instance.Dispatcher.Invoke(() => Instance.GetProductIndex(
+                    Instance.productList, newAuct
+                    ));
+                
+                    Instance.Dispatcher.Invoke(() => Instance.AddAuctionToBoard(newAuct));
+                }
+
+                catch (SocketException se) {
+                    Debug.WriteLine(se.Message);
+                }
+            // send result
+            if (Instance.endAuctionFlag==1) {
+                // create winning list
+                Instance.Dispatcher.Invoke(() => Instance.CreateWinningList());
+
+                // check if current email in winning list?
+                bool isWin = Instance.Dispatcher.Invoke(() => Instance.IsWinning(clientEmail));
+                if (isWin) {
+                    // send
+                    Instance.Dispatcher.Invoke(() => Instance.OnSend(socket, "You win!"));
+                }
+                else {
+                    Instance.Dispatcher.Invoke(() => Instance.OnSend(socket, "You lose!"));
+                }
+            }
+            
         }
 
+        private bool IsWinning(string email) {
+            for (int i =0;i<winClients.Count;i++) {
+                if (email == winClients[i].Email) return true;
+            }
+            return false;
+        }
+        private void CreateWinningList() {
+            winClients = new List<ResultModel>();
+            for (int i = 0; i < productList.Count; i++) {
+                if (productList[i].auctioner.Count > 0) {
+                    // sort auctioner asc
+                    productList[i].auctioner.OrderBy(product => product.AuctionCost).ToList();
+                    // send to loser
+                    winClients.Add(new ResultModel() {
+                        Email = productList[i].auctioner[productList[i].auctioner.Count - 1].AuctionEmail,
+                        Product = productList[i].ProductName
+                    });
+
+
+                }
+            }
+        }
         private void StartServer(object sender, RoutedEventArgs e) {
             //get number from txtbox
             int amount = Convert.ToInt32(amountClientTextBox.Text);
             StartServer(amount);
         }
+        private void AddAuctionToBoard(string data) {
+            TextBlock t = CreateTextBlock(data);
+            auctionRegion.Children.Add(t);
+        }
         private void UpdateUI(string data) {
             var text = new TextBlock();
-            text.Text = data;
+            text.Text = $"{data} connected on {server.LocalEndPoint}";
             dashboardRegion.Children.Add(text);
         }
-        private void Window_Closed(object sender, EventArgs e) {
-            server.Close();
-          
+
+        private TextBlock CreateTextBlock(string s) {
+            var t = new TextBlock {
+                Text = s
+            };
+            return t;
         }
+        private void Window_Closed(object sender, EventArgs e) {
+          
+            if (server == null) return;
+            server.Close();
+            handler.Abort();
+            Application.Current.Shutdown();
+            
+        }
+
+       
     }
 }
+
+/*
+ * 
+ */

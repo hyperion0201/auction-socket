@@ -67,6 +67,7 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="AuctionPacket.cs" />
     <Compile Include="Connect.xaml.cs">
       <DependentUpon>Connect.xaml</DependentUpon>
     </Compile>

@@ -17,6 +17,7 @@ using System.Net;
 using System.Threading;
 using System.IO;
 using System.Collections.ObjectModel;
+using System.Windows.Threading;
 
 namespace Client {
     /// <summary>
@@ -28,17 +29,33 @@ namespace Client {
 
     public partial class MainWindow : Window {
         private const int port = 8080;
+        private Socket client = null;
+        private string _email = null;
+      
+       
         // Thread signal.  
-
+        List<Product> productList = null;
         public static MainWindow Instance { get; private set; }
-        public MainWindow() {
+        public MainWindow() {   
             InitializeComponent();
 
             Instance = this;
 
         }
+
        
+        private string OnReceive(Socket socket) {
+            byte[] bytes = new byte[1024];
+            int recMsg = socket.Receive(bytes);
+            string text = Encoding.ASCII.GetString(bytes, 0, recMsg);
+            return text;
+        }
+        private void UpdateTimeUI(string s) {
+            timeText.Text = s;
+        }
+        
         private void StartClient(string email) {
+            productList = new List<Product>();
             byte[] bytes = new byte[1024];
             try {
                 // Connect to a Remote server  
@@ -51,32 +68,79 @@ namespace Client {
                 IPEndPoint remoteEP = new IPEndPoint(ipAddress, port);
 
                 // Create a TCP/IP  socket.    
-                Socket sender = new Socket(ipAddress.AddressFamily,
+                 client = new Socket(ipAddress.AddressFamily,
                     SocketType.Stream, ProtocolType.Tcp);
 
                 // Connect the socket to the remote endpoint. Catch any errors.    
                 try {
                     // Connect to Remote EndPoint  
-                    sender.Connect(remoteEP);
+                    client.Connect(remoteEP);
 
                     checkText.Text = $"Client connected on {remoteEP}";
+                    // create timer thread
+                    int timeRemain = 30;
 
+                    Instance.Dispatcher.Invoke(() => Instance.UpdateTimeUI($"{timeRemain}"));
+                    DispatcherTimer timeTracker = new DispatcherTimer();
+                    timeTracker.Interval = TimeSpan.FromSeconds(1);
+                    timeTracker.Tick += (sender, e) => {
+                        timeRemain--;
+                        Instance.Dispatcher.Invoke(() => Instance.UpdateTimeUI($"{timeRemain}"));
+                        if (timeRemain == 0) {
+                            timeTracker.Stop();
+                            Instance.sendAuctingbtn.IsEnabled = false;
+
+                            MessageBox.Show("Out of time.");
+                            // call onreceive
+                            string rs = OnReceive(client);
+                            MessageBox.Show(rs);
+                        }
+
+                    };
+
+                    // receive kick msg or not
+                    int byteKickRec = client.Receive(bytes);
+                   string firstmsg = Encoding.ASCII.GetString(bytes, 0, byteKickRec);
+                    if (firstmsg!=null) {
+                        timeTracker.Start();
+                        MessageBox.Show(firstmsg);
+                    }
                     
-                    // Encode the data string into a byte array.    
-                    byte[] msg = Encoding.ASCII.GetBytes($"{email}\n");
-                    // get data
+                    byte[] msg = Encoding.ASCII.GetBytes($"{email}");
+              
 
-                    // Send the data through the socket.    
-                    int bytesSent = sender.Send(msg);
+                    // Send email through the socket.    
+                    int bytesSent = client.Send(msg);
 
                     // Receive the response from the remote device.    
-                    int bytesRec = sender.Receive(bytes);
+                    int bytesRec = client.Receive(bytes);
                     TextBlock res = new TextBlock();
                     res.Text = Encoding.ASCII.GetString(bytes, 0, bytesRec);
-                    clientRegion.Children.Add(res);
+                    if (res.Text == "Duplicate email.") {
+                        clientRegion.Children.Add(res);
+                        client.Shutdown(SocketShutdown.Both);
+                        client.Close();
+                        return;
+                    }
+                    
+
+                    // receive product
+                    StreamWriter sw = new StreamWriter("product.txt");
+                    int productRec = client.Receive(bytes);
+                    string productStream = Encoding.ASCII.GetString(bytes, 0, productRec) ;
+                    sw.Write(productStream);
+                    productList = Product.ParseProduct(productStream);
+                    productBoard.ItemsSource = productList;
+                    productCombobox.ItemsSource = productList;
+
+                    // enable timer
+
+                    //wait for result notification
+
+                    
+                    
                     // Release the socket.    
-                    sender.Shutdown(SocketShutdown.Both);
-                    sender.Close();
+                    
 
                 } catch (ArgumentNullException ane) {
                     Console.WriteLine("ArgumentNullException : {0}", ane.ToString());
@@ -92,18 +156,38 @@ namespace Client {
             }
         }
 
-        private void SendReq(object sender, RoutedEventArgs e) {
-           
+        private void OnSend(Socket socket, AuctionPacket auctPacket) {
+            if (socket.Connected==true) {
+                //get data from packet
+               
+                byte[] sendMsg = Encoding.ASCII.GetBytes($"{auctPacket.ID}/{auctPacket.Email}/{auctPacket.Cost}");
+                socket.Send(sendMsg);
+            }
         }
-
-        private void Window_Loaded(object sender, RoutedEventArgs e) {
+      
+        private void Window_Loaded(object client, RoutedEventArgs e) {
             // request email for textbox
             string email = "";
             var connectScreen = new Connect();
             if (connectScreen.ShowDialog() == true) {
                 email = connectScreen.Email;
+                _email = email;
             }
             StartClient(email);
         }
+
+        private void SendAuction_Click(object client, RoutedEventArgs e) {
+            var item = productCombobox.SelectedItem as Product;
+            AuctionPacket packetSend = new AuctionPacket() {
+                Email = _email,
+                ID = item.ID,
+                Cost = newPriceTextBox.Text
+            };
+          
+       
+            OnSend(this.client, packetSend);
+        }
+
+        
     }
 }

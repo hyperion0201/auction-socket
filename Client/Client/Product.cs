@@ -8,6 +8,19 @@ using System.ComponentModel;
 namespace Client {
     
         public class Product : INotifyPropertyChanged {
+        public static List<Product> ParseProduct(string s) {
+            List<Product> products = new List<Product>();
+            string[] productArr = s.Split('\n');
+            for (int i=0;i<productArr.Length-1;i++) {
+                string[] productComponent = productArr[i].Split('/');
+                products.Add(new Product() {
+                    ID = productComponent[0],
+                    ProductName = productComponent[1],
+                    BeginCost = productComponent[2]
+                });
+            }
+            return products;
+        }
             private string _id;
             private string _productname;
             private string _begincost;

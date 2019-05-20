@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Net.Sockets;
-using System.Net;
-namespace Server {
-    public class ClientModel {
+
+namespace Client {
+    public class AuctionPacket {
         public string Email { get; set; }
-        public Socket ClientSocket { get; set; }
-        //public win
+        public string ID { get; set; }
+        public string Cost { get; set; }
+
     }
 }
