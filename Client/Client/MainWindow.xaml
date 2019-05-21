@@ -5,7 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Client"
         mc:Ignorable="d"
-        Title="MainWindow" Height="400" Width="500"
+        Title="Client" Height="400" Width="500"
+        Closing="Window_Closing"
         Loaded="Window_Loaded">
  
     <StackPanel Name="clientRegion">

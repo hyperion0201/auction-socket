@@ -15,13 +15,7 @@
         </Grid.ColumnDefinitions>
         <StackPanel Orientation="Vertical" Name="auctionRegion" Grid.Column="0">
             <TextBlock Name="responseText"/>
-            <ListView Name="productBoard" >
-                <ListView.View>
-                    <GridView>
-                        
-                    </GridView>
-                </ListView.View>
-            </ListView>
+            
         </StackPanel>
         <StackPanel Name="dashboardRegion" Grid.Column="1">
             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">

@@ -89,41 +89,42 @@ namespace Server {
             socket.Send(msg);
         }
 
-        private static void TimerProcess() {
-            Timer timeTracker = new Timer();
-            timeTracker.Interval = 1000;
-            timeTracker.Elapsed += (sender, e) => {
-                Instance.queueTime--;
-                Instance.Dispatcher.Invoke(() => Instance.timeText.Text = $"{Instance.queueTime}");
-
-                if (Instance.queueTime == 0) {
-                    timeTracker.Stop();
-                    Instance.endAuctionFlag = 1;
-
-                    //Send out of time msg
-                    MessageBox.Show("Auction is over.");
-
-                    //timeFlag = 0;
-
-                    //return;
-                }
-            };
-
-            timeTracker.Start();
-        }
+        
         private  void Accept(Socket socket) {
             int timeFlag = 1;
-            while(true) {
+           // Thread timer = new Thread(new ThreadStart(TimerProcess));
+            while (true) {
                
                     Socket accepted = socket.Accept();
                    
                Instance.Dispatcher.Invoke(()=> timeText.Text = $"{queueTime}");
                     if (connectedAmount < maxClient && timeFlag==1) {
                     connectedAmount++;
-                    queueTime = 30;
 
-                    timeTracker = null;
-                    
+                    Instance.queueTime = 30;
+                    if (Instance.timeTracker!=null) {
+                        Instance.timeTracker.Stop();
+                        Instance.timeTracker = null;
+                    }
+                     timeTracker = new Timer();
+                    timeTracker.Interval = 1000;
+                    timeTracker.Elapsed += (sender, e) => {
+                        Instance.queueTime--;
+                        Instance.Dispatcher.Invoke(() => Instance.timeText.Text = $"{Instance.queueTime}");
+
+                        if (Instance.queueTime == 0) {
+                            timeTracker.Stop();
+                            Instance.endAuctionFlag = 1;
+
+                            //Send out of time msg
+                            MessageBox.Show("Auction is over.");
+
+                            timeFlag = 0;
+
+                            //return;
+                        }
+                    };
+                    timeTracker.Start();
 
                     // send ok response
                     byte[] okmsg = Encoding.ASCII.GetBytes("Connected.");
@@ -213,21 +214,25 @@ namespace Server {
                     Debug.WriteLine(se.Message);
                 }
             // send result
-            if (Instance.endAuctionFlag==1) {
-                // create winning list
-                Instance.Dispatcher.Invoke(() => Instance.CreateWinningList());
+            while(true) {
+                if (Instance.endAuctionFlag == 1) {
+                    // create winning list
+                    Instance.Dispatcher.Invoke(() => Instance.CreateWinningList());
 
-                // check if current email in winning list?
-                bool isWin = Instance.Dispatcher.Invoke(() => Instance.IsWinning(clientEmail));
-                if (isWin) {
-                    // send
-                    Instance.Dispatcher.Invoke(() => Instance.OnSend(socket, "You win!"));
+                    // check if current email in winning list?
+                    bool isWin = Instance.Dispatcher.Invoke(() => Instance.IsWinning(clientEmail));
+                    if (isWin) {
+                        // send
+                        Instance.Dispatcher.Invoke(() => Instance.OnSend(socket, "You win!"));
+                    } else {
+                        Instance.Dispatcher.Invoke(() => Instance.OnSend(socket, "You lose!"));
+                    }
+                    break;
                 }
-                else {
-                    Instance.Dispatcher.Invoke(() => Instance.OnSend(socket, "You lose!"));
-                }
+                
             }
-            
+           
+
         }
 
         private bool IsWinning(string email) {
@@ -268,8 +273,9 @@ namespace Server {
         }
 
         private TextBlock CreateTextBlock(string s) {
+            string[] arr = s.Split('/');
             var t = new TextBlock {
-                Text = s
+                Text = $"{arr[1]} choose product ID {arr[0]} with new cost : {arr[2]}"
             };
             return t;
         }

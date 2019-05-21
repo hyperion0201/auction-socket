@@ -177,17 +177,37 @@ namespace Client {
         }
 
         private void SendAuction_Click(object client, RoutedEventArgs e) {
+            double newPrice = int.Parse(newPriceTextBox.Text);
             var item = productCombobox.SelectedItem as Product;
-            AuctionPacket packetSend = new AuctionPacket() {
-                Email = _email,
-                ID = item.ID,
-                Cost = newPriceTextBox.Text
-            };
-          
-       
-            OnSend(this.client, packetSend);
+            if (double.Parse(item.BeginCost) >= newPrice)
+            {
+                MessageBox.Show("Your price was lower than the product begin price, please auctions again");
+                newPriceTextBox.Focus();
+            }
+            else
+            {
+                AuctionPacket packetSend = new AuctionPacket()
+                {
+                    Email = _email,
+                    ID = item.ID,
+                    Cost = newPriceTextBox.Text
+                };
+
+
+                OnSend(this.client, packetSend);
+            }
         }
 
-        
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            if (MessageBox.Show("Are you want to close Application?", "Question", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.No)
+            {
+                e.Cancel = true;
+            }
+            else
+            {
+                e.Cancel = false;
+            }
+        }
     }
 }
