@@ -66,7 +66,7 @@ namespace Server {
                 });
             }
 
-            IPHostEntry host = Dns.GetHostEntry("localhost");
+            IPHostEntry host = Dns.GetHostEntry("THINKPAD-L540");
             IPAddress ipAddress = host.AddressList[0];
             IPEndPoint localEP = new IPEndPoint(ipAddress, port);
             server = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
