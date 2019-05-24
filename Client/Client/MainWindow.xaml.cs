@@ -93,13 +93,31 @@ namespace Client {
                             // receive result from client
 
                             string rsReceive = OnReceive(client);
-                           
                             TextBlock result = new TextBlock {
                                 Text = $"Result : {rsReceive}"
                             };
                             result.Margin = new Thickness(20, 20, 0, 0);
-                           
                             clientRegion.Children.Add(result);
+
+
+                            if (rsReceive=="You win!") {
+                                var auctionResult = new AuctionResult();
+                                if (auctionResult.ShowDialog() == true) {
+                                    var bankID = auctionResult.bankID;
+                                    var cardID = auctionResult.cardID;
+                                    byte[] payment = Encoding.ASCII.GetBytes($"{bankID}/{cardID}");
+                                    client.Send(payment);
+                                    string paymentRs = OnReceive(client);
+                                    clientRegion.Children.Add(new TextBlock {
+                                        Text = paymentRs,
+                                        Margin = new Thickness(20,20,0,0)
+                                    });
+                                }
+                            }
+                            else {
+                                OnSend(client, null);
+                            }
+                            
                         }
 
                     };
@@ -157,6 +175,12 @@ namespace Client {
         }
 
         private void OnSend(Socket socket, AuctionPacket auctPacket) {
+            if (auctPacket == null) {
+                byte[] sendMsg = Encoding.ASCII.GetBytes("null/null/null");
+                socket.Send(sendMsg);
+                return;
+            }
+            
             if (socket.Connected==true) {
                 //get data from packet
                

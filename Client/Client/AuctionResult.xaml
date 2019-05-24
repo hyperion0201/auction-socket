@@ -5,14 +5,14 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Client"
         mc:Ignorable="d"
-        Title="AuctionResult" Height="450" Width="800">
+        Title="Confirm Payment" Height="400" Width="400">
     <Canvas>
-        <TextBlock Text="Congratulation! Auction success!" FontSize="20" Canvas.Left="234" Canvas.Top="34"/>
-        <TextBlock Text="Fill this infomation to complete: " FontSize="20" Canvas.Left="147" Canvas.Top="100"/>
-        <TextBlock Text="Bank ID" FontSize="20" Canvas.Left="147" Canvas.Top="153"/>
-        <TextBox Name="bankIDTextbox" Width="300" Height="35" Canvas.Left="147" Canvas.Top="185"/>
-        <TextBlock Text="Card ID" FontSize="20" RenderTransformOrigin="2.544,6.789" Canvas.Left="147" Canvas.Top="240"/>
-        <TextBox Name="cardIDTextbox" Width="300" Height="35" Canvas.Left="147" Canvas.Top="267"/>
-        <Button Name="finishButton" Click="FinishButton_Click" Content="Finish" FontSize="20" Width="100" Height="35" RenderTransformOrigin="2.134,4.709" Canvas.Left="602" Canvas.Top="347"/>
+        <TextBlock Text="Congratulation! Auction success!"  Canvas.Left="112" Canvas.Top="34"/>
+        <TextBlock Text="Fill this infomation to complete: " Canvas.Left="114" Canvas.Top="76"/>
+        <TextBlock Text="Bank ID" Canvas.Left="54" Canvas.Top="119"/>
+        <TextBox Name="bankIDTextbox" Width="300" Height="35" Canvas.Left="54" Canvas.Top="151"/>
+        <TextBlock Text="Card ID"  RenderTransformOrigin="2.544,6.789" Canvas.Left="54" Canvas.Top="206"/>
+        <TextBox Name="cardIDTextbox" Width="300" Height="35" Canvas.Left="54" Canvas.Top="233"/>
+        <Button Name="finishButton" Click="FinishButton_Click" Content="Finish" Width="100" Height="35" RenderTransformOrigin="2.134,4.709" Canvas.Left="141" Canvas.Top="291"/>
     </Canvas>
 </Window>

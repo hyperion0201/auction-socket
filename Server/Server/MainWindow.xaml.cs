@@ -237,9 +237,17 @@ namespace Server {
                     } else {
                         Instance.Dispatcher.Invoke(() => Instance.OnSend(socket, "You lose!"));
                     }
+
+                    // receive payment information
+
+                    int paymentByte = socket.Receive(bytes);
+                    string paymentStr = Encoding.ASCII.GetString(bytes, 0, paymentByte);
+                    if (paymentStr!="null/null/null") {
+                        Instance.Dispatcher.Invoke(() => Instance.OnSend(socket, "Payment successful!"));
+                    } 
                     break;
                 }
-                
+                    
             }
            
 
