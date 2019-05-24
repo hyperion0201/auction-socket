@@ -31,7 +31,7 @@ namespace Client {
         private const int port = 8080;
         private Socket client = null;
         private string _email = null;
-      
+        private bool isSent = false;
        
         // Thread signal.  
         List<Product> productList = null;
@@ -88,8 +88,10 @@ namespace Client {
                         Instance.Dispatcher.Invoke(() => Instance.UpdateTimeUI($"{timeRemain}"));
                         if (timeRemain == 0) {
                             timeTracker.Stop();
+                            // send an anonymous packet
+                            OnSend(client, null);
                             Instance.sendAuctingbtn.IsEnabled = false;
-                            
+                           
                             // receive result from client
 
                             string rsReceive = OnReceive(client);
@@ -201,6 +203,7 @@ namespace Client {
         }
 
         private void SendAuction_Click(object client, RoutedEventArgs e) {
+
             double newPrice = int.Parse(newPriceTextBox.Text);
             var item = productCombobox.SelectedItem as Product;
             if (double.Parse(item.BeginCost) >= newPrice)
@@ -223,6 +226,7 @@ namespace Client {
                 productList.Remove(p);
                 productBoard.ItemsSource = null;
                 productBoard.ItemsSource = productList;
+                isSent = true;
             }
         }
 
