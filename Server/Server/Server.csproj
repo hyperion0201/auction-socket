@@ -57,7 +57,6 @@
     </ApplicationDefinition>
     <Compile Include="ClientModel.cs" />
     <Compile Include="Product.cs" />
-    <Compile Include="RelayCommand.cs" />
     <Compile Include="ServerModel.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -97,6 +96,18 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="server.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="start.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="stop.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="clear.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

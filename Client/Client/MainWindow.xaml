@@ -7,6 +7,7 @@
         mc:Ignorable="d"
         Title="Client" Height="400" Width="500"
         Closing="Window_Closing"
+        Icon="client.png"
         Loaded="Window_Loaded">
  
     <StackPanel Name="clientRegion">
@@ -17,7 +18,7 @@
                 
             </TextBlock>
         </Grid>
-        <TextBlock Name="checkText"/>
+        <TextBlock Margin="20,0,0,0" Name="checkText"/>
         <ListView Margin="10" Name="productBoard">
             <ListView.View>
                 <GridView>
@@ -37,7 +38,7 @@
                 </DataTemplate>
             </ComboBox.ItemTemplate>
         </ComboBox>
-        <TextBlock Text="Choose 1 product , then type your new price."/>
+        <TextBlock Margin="20,0,0,0" Text="Choose 1 product , then type your new price."/>
         <TextBox Width="100" Height="30" Name="newPriceTextBox"/>
         <Button Click="SendAuction_Click" Name="sendAuctingbtn" Content="Submit new Price" Width="150" Height="30"/>
     </StackPanel>

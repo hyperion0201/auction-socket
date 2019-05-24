@@ -92,7 +92,7 @@ namespace Server {
         
         private  void Accept(Socket socket) {
             int timeFlag = 1;
-           // Thread timer = new Thread(new ThreadStart(TimerProcess));
+           
             while (true) {
                
                     Socket accepted = socket.Accept();
@@ -117,7 +117,7 @@ namespace Server {
                             Instance.endAuctionFlag = 1;
 
                             //Send out of time msg
-                            MessageBox.Show("Auction is over.");
+                            MessageBox.Show("Time is over.");
 
                             timeFlag = 0;
 
@@ -127,7 +127,7 @@ namespace Server {
                     timeTracker.Start();
 
                     // send ok response
-                    byte[] okmsg = Encoding.ASCII.GetBytes("Connected.");
+                    byte[] okmsg = Encoding.ASCII.GetBytes("Connected to server.");
                     accepted.Send(okmsg);
 
 
@@ -222,8 +222,11 @@ namespace Server {
                     // check if current email in winning list?
                     bool isWin = Instance.Dispatcher.Invoke(() => Instance.IsWinning(clientEmail));
                     if (isWin) {
-                        // send
+                        // send a toast to winner
                         Instance.Dispatcher.Invoke(() => Instance.OnSend(socket, "You win!"));
+                        //update log
+                        
+
                     } else {
                         Instance.Dispatcher.Invoke(() => Instance.OnSend(socket, "You lose!"));
                     }
@@ -259,11 +262,20 @@ namespace Server {
         }
         private void StartServer(object sender, RoutedEventArgs e) {
             //get number from txtbox
-            int amount = Convert.ToInt32(amountClientTextBox.Text);
-            StartServer(amount);
+            try {
+                int amount = Convert.ToInt32(amountClientTextBox.Text);
+                StartServer(amount);
+                startServerbtn.IsEnabled = false;
+                stopServerbtn.IsEnabled = true;
+            }
+            catch(FormatException fe) {
+                MessageBox.Show($"{fe.Message}");
+            }
+            
         }
         private void AddAuctionToBoard(string data) {
             TextBlock t = CreateTextBlock(data);
+            t.Margin = new Thickness(20, 0, 0, 0);
             auctionRegion.Children.Add(t);
         }
         private void UpdateUI(string data) {
@@ -288,7 +300,24 @@ namespace Server {
             
         }
 
-       
+        private void StopServer(object sender, RoutedEventArgs e) {
+            if (server!=null) {
+                // try to shutdown socket
+                try {
+                   // server.Shutdown(SocketShutdown.Both);
+                    server.Close();
+                    startServerbtn.IsEnabled = true;
+                    stopServerbtn.IsEnabled = false;
+                }
+               catch (SocketException se) {
+                    MessageBox.Show($"{se.Message}");
+                }
+            }
+        }
+
+        private void ClearBoard(object sender, RoutedEventArgs e) {
+            auctionRegion.Children.Clear();
+        }
     }
 }
 

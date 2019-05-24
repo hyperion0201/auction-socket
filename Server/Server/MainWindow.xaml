@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Server"
         mc:Ignorable="d"
-        Title="Server" Height="450" Width="800"
+        Title="Server" Height="450" Width="800" Icon="server.png"
       Closed="Window_Closed"
        >
     <Grid Name="serverRegion">
@@ -13,17 +13,42 @@
             <ColumnDefinition Width="0.6*"/>
             <ColumnDefinition Width="0.4*"/>
         </Grid.ColumnDefinitions>
-        <StackPanel Orientation="Vertical" Name="auctionRegion" Grid.Column="0">
-            <TextBlock Name="responseText"/>
-            
+        <StackPanel Orientation="Vertical">
+            <TextBlock Name="responseText" Text="AUCTION BOARD" HorizontalAlignment="Center" Margin="0,20,0,0"
+                       FontSize="20"/>
+            <TextBlock Text="Incoming log :" Margin="20,0,0,0"/>
+            <StackPanel Margin="0,20,0,0" Orientation="Vertical" Name="auctionRegion" Grid.Column="0">
+
+            </StackPanel>
         </StackPanel>
+        
+        
         <StackPanel Name="dashboardRegion" Grid.Column="1">
-            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+            <StackPanel Margin="0,10,0,0" HorizontalAlignment="Center" Orientation="Horizontal">
                 <TextBlock Text="Max client are allowed to connect: "/>
                 <TextBox Name="amountClientTextBox" Width="50" Height="20"></TextBox>
                 
             </StackPanel>
-            <Button Name="startServerbtn" Click="StartServer" Width="80" Height="30" Content="Start Server"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button BorderThickness="0" Background="Transparent" Name="startServerbtn" Click="StartServer" Width="100" Height="30">
+                    <StackPanel Background="Transparent" Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Image Source="start.png" Width="20" Height="20" Stretch="Fill"/>
+                        <TextBlock Text="  Start Server" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button BorderThickness="0" Background="Transparent" Name="stopServerbtn" Click="StopServer" Width="100" Height="30">
+                    <StackPanel Background="Transparent" Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Image Source="stop.png" Width="20" Height="20" Stretch="Fill"/>
+                        <TextBlock Text="  Stop Server" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+            <Button BorderThickness="0" Background="Transparent" Name="clearBpardbtn" Click="ClearBoard" Width="100" Height="30">
+                <StackPanel Background="Transparent" Orientation="Horizontal" HorizontalAlignment="Center">
+                    <Image Source="clear.png" Width="20" Height="20" Stretch="Fill"/>
+                    <TextBlock Text="  Clear logs" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
             <TextBlock Name="status"/>
             <Grid HorizontalAlignment="Center">
                 <Rectangle Margin="0,10,0,0" Fill="Bisque"  Width="80" Height="30" RadiusX="8" RadiusY="8">
@@ -32,7 +57,10 @@
 
                 </TextBlock>
             </Grid>
-            <TextBlock Text="Log:" FontSize="12"/>
+            <StackPanel Name="connectlogBoard" Orientation="Vertical">
+                <TextBlock Margin="0,20,0,0" Text="Connection Log:" HorizontalAlignment="Center" FontSize="12"/>
+            </StackPanel>
+            
         </StackPanel>
     </Grid>
 </Window>

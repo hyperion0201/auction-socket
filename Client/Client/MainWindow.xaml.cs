@@ -76,7 +76,7 @@ namespace Client {
                     // Connect to Remote EndPoint  
                     client.Connect(remoteEP);
 
-                    checkText.Text = $"Client connected on {remoteEP}";
+                    checkText.Text = $"{email} connected on {remoteEP}";
                     // create timer thread
                     int timeRemain = 30;
 
@@ -90,7 +90,8 @@ namespace Client {
                             timeTracker.Stop();
                             Instance.sendAuctingbtn.IsEnabled = false;
 
-                            MessageBox.Show("Out of time.");
+                            //MessageBox.Show("Out of time.");
+
                             // call onreceive
                             string rs = OnReceive(client);
                             MessageBox.Show(rs);
@@ -133,20 +134,14 @@ namespace Client {
                     productBoard.ItemsSource = productList;
                     productCombobox.ItemsSource = productList;
 
-                    // enable timer
-
-                    //wait for result notification
-
-                    
-                    
-                    // Release the socket.    
+                   
                     
 
                 } catch (ArgumentNullException ane) {
                     Console.WriteLine("ArgumentNullException : {0}", ane.ToString());
                 } catch (SocketException se) {
                     Console.WriteLine("SocketException : {0}", se.ToString());
-                    checkText.Text = "Socket error.";
+                    checkText.Text = "There was an error when connecting to server.";
                 } catch (Exception e) {
                     Console.WriteLine("Unexpected exception : {0}", e.ToString());
                 }
@@ -181,7 +176,7 @@ namespace Client {
             var item = productCombobox.SelectedItem as Product;
             if (double.Parse(item.BeginCost) >= newPrice)
             {
-                MessageBox.Show("Your price was lower than the product begin price, please auctions again");
+                MessageBox.Show("You can't pay a lower price than origin price.");
                 newPriceTextBox.Focus();
             }
             else
@@ -200,7 +195,7 @@ namespace Client {
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            if (MessageBox.Show("Are you want to close Application?", "Question", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.No)
+            if (MessageBox.Show("Close application?", "Question", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.No)
             {
                 e.Cancel = true;
             }
