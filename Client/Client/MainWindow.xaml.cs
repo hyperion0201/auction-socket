@@ -89,12 +89,17 @@ namespace Client {
                         if (timeRemain == 0) {
                             timeTracker.Stop();
                             Instance.sendAuctingbtn.IsEnabled = false;
+                            
+                            // receive result from client
 
-                            //MessageBox.Show("Out of time.");
-
-                            // call onreceive
-                            string rs = OnReceive(client);
-                            MessageBox.Show(rs);
+                            string rsReceive = OnReceive(client);
+                           
+                            TextBlock result = new TextBlock {
+                                Text = $"Result : {rsReceive}"
+                            };
+                            result.Margin = new Thickness(20, 20, 0, 0);
+                           
+                            clientRegion.Children.Add(result);
                         }
 
                     };
@@ -188,21 +193,21 @@ namespace Client {
                     Cost = newPriceTextBox.Text
                 };
 
-
                 OnSend(this.client, packetSend);
+                sendAuctingbtn.IsEnabled = false;
+                Product p = GetProductFromID(packetSend.ID);
+                productList.Remove(p);
+                productBoard.ItemsSource = null;
+                productBoard.ItemsSource = productList;
             }
         }
 
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
-        {
-            if (MessageBox.Show("Close application?", "Question", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.No)
-            {
-                e.Cancel = true;
+        private Product GetProductFromID(string id) {
+            for (int i =0;i<productList.Count;i++) {
+                if (productList[i].ID == id) return productList[i];
             }
-            else
-            {
-                e.Cancel = false;
-            }
+            return new Product();
         }
+        
     }
 }

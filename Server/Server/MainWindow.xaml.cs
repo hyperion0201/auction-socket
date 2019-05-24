@@ -17,14 +17,19 @@ using Timer = System.Timers.Timer;
 
 namespace Server {
 
+    #region ResultModel to hold the auction results
     public class ResultModel {
         public string Email { get; set; }
         public string Product { get; set; }
 
     }
+    #endregion
     public partial class MainWindow : Window {
-       
-        private const int port = 8080;
+
+
+        #region Global Variables Declaration
+
+        private const int port = 8080; 
         public Socket server = null;
         public string data = null;
         private int maxClient = 0;
@@ -38,6 +43,7 @@ namespace Server {
         
         private int endAuctionFlag = 0;
         public static MainWindow Instance { get; private set; }
+        #endregion
         public MainWindow() {
             InitializeComponent();
             Instance = this;
@@ -66,7 +72,7 @@ namespace Server {
             server = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             server.Bind(localEP);
             
-            status.Text = "Waiting for connection...";
+            status.Text = $"Server started on {localEP}\nWaiting for connection...";
             
             new Thread(() => StartListening(server, maxClient)).Start();
             
@@ -94,9 +100,8 @@ namespace Server {
             int timeFlag = 1;
            
             while (true) {
-               
                     Socket accepted = socket.Accept();
-                   
+                
                Instance.Dispatcher.Invoke(()=> timeText.Text = $"{queueTime}");
                     if (connectedAmount < maxClient && timeFlag==1) {
                     connectedAmount++;
@@ -121,15 +126,13 @@ namespace Server {
 
                             timeFlag = 0;
 
-                            //return;
                         }
                     };
                     timeTracker.Start();
 
-                    // send ok response
+                    // send connect response
                     byte[] okmsg = Encoding.ASCII.GetBytes("Connected to server.");
                     accepted.Send(okmsg);
-
 
                     //create new thread
 
@@ -201,7 +204,11 @@ namespace Server {
             socket.Send(product);
 
                 try {
+
+                // receive new auctionpacket as string : email, id, cost
                     int auctByte = socket.Receive(bytes);
+                
+                    
                     string newAuct = Encoding.ASCII.GetString(bytes, 0, auctByte);
                 Instance.Dispatcher.Invoke(() => Instance.GetProductIndex(
                     Instance.productList, newAuct
@@ -244,15 +251,26 @@ namespace Server {
             }
             return false;
         }
+         
+        private int GetWinner(List<AuctionModel> auctioner) {
+            int lastauction = Convert.ToInt32(auctioner[auctioner.Count - 1].AuctionCost);
+            for (int i =0;i<auctioner.Count-1;i++) {
+                if (Convert.ToInt32(auctioner[i].AuctionCost) == lastauction) return i;
+            }
+            return auctioner.Count - 1;
+        }
+       
         private void CreateWinningList() {
             winClients = new List<ResultModel>();
             for (int i = 0; i < productList.Count; i++) {
                 if (productList[i].auctioner.Count > 0) {
                     // sort auctioner asc
                     productList[i].auctioner.OrderBy(product => product.AuctionCost).ToList();
-                    // send to loser
+
+                    int winnerindex = GetWinner(productList[i].auctioner);
+
                     winClients.Add(new ResultModel() {
-                        Email = productList[i].auctioner[productList[i].auctioner.Count - 1].AuctionEmail,
+                        Email = productList[i].auctioner[winnerindex].AuctionEmail,
                         Product = productList[i].ProductName
                     });
 
@@ -278,10 +296,11 @@ namespace Server {
             t.Margin = new Thickness(20, 0, 0, 0);
             auctionRegion.Children.Add(t);
         }
-        private void UpdateUI(string data) {
-            var text = new TextBlock();
-            text.Text = $"{data} connected on {server.LocalEndPoint}";
-            dashboardRegion.Children.Add(text);
+        private void UpdateUI(string email) {
+            var text = new TextBlock {
+                Text = $"{email} connected on {server.LocalEndPoint}"
+            };
+            connectlogBoard.Children.Add(text);
         }
 
         private TextBlock CreateTextBlock(string s) {
@@ -308,6 +327,10 @@ namespace Server {
                     server.Close();
                     startServerbtn.IsEnabled = true;
                     stopServerbtn.IsEnabled = false;
+                    // change status text
+                    status.Text = $"Server stopped.";
+                    if (timeTracker != null) timeTracker.Stop();
+
                 }
                catch (SocketException se) {
                     MessageBox.Show($"{se.Message}");
@@ -317,6 +340,7 @@ namespace Server {
 
         private void ClearBoard(object sender, RoutedEventArgs e) {
             auctionRegion.Children.Clear();
+            connectlogBoard.Children.Clear();
         }
     }
 }
